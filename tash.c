@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
-
-
+#include <sys/types.h>
+#include <sys/wait.h>
 struct commands
 {
   char* commandName;
@@ -26,30 +26,52 @@ void exitProcess()
   exit(0);
 }
 
+//To Do: Add a way to detect if a path does not exist and return an error.
 void cdProcess(char* path)
 {
   char currentDir[PATH_MAX];
-  printf(path);
-  /*
-  if (strlen(path)==1)
+
+  if (path == NULL)
   {
-    printf("%s\n", getcwd(currentDir,PATH_MAX));
-    chdir("..");
+    chdir(getenv("HOME"));
     printf("%s\n", getcwd(currentDir,PATH_MAX));
   }
   else
   {
-    //(path);
     chdir(path);
-    printf(path);
     printf("%s\n", getcwd(currentDir,PATH_MAX));
-
   }
-  */
+}
+
+void setPaths(char* args)
+{
+  //Contains the list of paths. Max number of paths = 200.
+  //First path will always be /bin.
+  char* pathsList[200];
+  pathsList[0] = "/bin";
+
+  int argCounter = 1;
+  args = strtok(NULL, " \n\r\t");
+
+  //Should probably also check if those arguments are actually accesible.
+  while(args != NULL)
+  {
+    pathsList[argCounter] = args;
+    args = strtok(NULL, " \n\r\t");
+    argCounter++;
+  }
+
+  //Delete: test to see if it collected all paths.
+
+  for(int x = 0; x < argCounter; x++)
+  {
+    printf("%s", pathsList[x]);
+  }
 }
 void commandHandlers(char* command)
 {
 
+  //List of built-in commands.
   char* commandList[3];
   commandList[0] = "exit";
   commandList[1] = "cd";
@@ -73,12 +95,46 @@ void commandHandlers(char* command)
       exitProcess();
       break;
     case 1:
-      command = strtok(NULL, " ");
+      command = strtok(NULL, " \n\r\t");
       cdProcess(command);
       break;
+    case 2:
+      setPaths(command);
+      break;
     default:
-      printf("invalid\n");
+      break;
 
+  }
+
+  //If the command is not a built in command, then execute the command normally.
+  if(switchValue == -1)
+  {
+    /*
+    pid_t pid;
+    char* paths = "/bin/ls"
+    char *execArgs[2];
+    int counter = 1;
+    execArgs[0] = paths;
+    //Parse all the arguments in the token...
+
+    while(command != NULL)
+    {
+      execArgs[counter] = command;
+      command = strtok(NULL, " \n\r\t");
+    }
+
+    pid = fork();
+
+    if (pid == 0)
+    {
+      //Child Process
+      execv(execArgs[0], execArgs);
+    }
+    else
+    {
+      wait(NULL);
+    }
+    */
   }
 
 }
@@ -101,10 +157,8 @@ int main()
     //If there is input, then execute the command if valid.
     else
     {
-      //const char delim[2] = " ";
       char* token;
       token = strtok(input, " \n\r\t");
-
       commandHandlers(token);
 
     }
