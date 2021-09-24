@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+//Todo: Currently in the process of transitioning pathsList to a dynamic variable.
+// Would need to convert commandHandler's implementation of pathList to a variable rather than an array.
 void exitProcess()
 {
   printf("exiting...\n");
@@ -29,9 +31,30 @@ void cdProcess(char* path)
   }
 }
 
-void setPaths(char* args, char* pathsList[])
+void setPaths(char* args, char* pathsList)
 {
 
+  //creating a "dynamic" path variable.
+
+  //char* pathsList = "/bin";
+
+  //Should probably also check if those arguments are actually accesible.
+  while(args != NULL)
+  {
+    //Overwrite the pathsList
+      char* newList = malloc(strlen(pathsList)+strlen(args)+2);
+      strcpy(newList, pathsList);
+      strcat(newList, " ");
+      strcat(newList, args);
+      pathsList = newList;
+      args = strtok(NULL, " \n\r\t");
+  }
+
+  printf("%s", pathsList);
+
+
+
+  /*
   int argCounter = 1;
   args = strtok(NULL, " \n\r\t");
 
@@ -49,14 +72,14 @@ void setPaths(char* args, char* pathsList[])
   {
     printf("%s\n", pathsList[x]);
   }
+  */
 }
-void commandHandlers(char* command)
+void commandHandlers(char* command, char* pathsList)
 {
   //Contains the list of paths. Max number of paths = 200.
   //First path will always be /bin.
-  char* pathsList[200] = {NULL};
-  pathsList[0] = "/bin";
-
+  //char* pathsList[200] = {NULL};
+  //pathsList[0] = "/bin";
   //List of built-in commands.
   char* commandList[3];
   commandList[0] = "exit";
@@ -91,6 +114,8 @@ void commandHandlers(char* command)
       break;
 
   }
+
+  /*
 
   //If the command is not a built in command, then execute the command normally.
   if(switchValue == -1)
@@ -145,7 +170,7 @@ void commandHandlers(char* command)
 
 
     //printf("%s",execArgs[0]);
-    /*
+
     pid_t pid;
     char* paths = "/bin/ls"
     char *execArgs[2];
@@ -170,14 +195,15 @@ void commandHandlers(char* command)
     {
       wait(NULL);
     }
-    */
-  }
 
+  }
+  */
 }
 int main()
 {
 
   //Reading input...
+  char* pathsList = "/bin";
   char input[200];
   while(1)
   {
@@ -195,7 +221,7 @@ int main()
     {
       char* token;
       token = strtok(input, " \n\r\t");
-      commandHandlers(token);
+      commandHandlers(token, pathsList);
 
     }
   }
