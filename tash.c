@@ -5,20 +5,6 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-struct commands
-{
-  char* commandName;
-  char* functionName;
-
-  /*
-  commands(char* inputName, char* inputFunction)
-  {
-    commandName = inputName;
-    functionName = inputFunction;
-  }
-  */
-};
-
 
 void exitProcess()
 {
@@ -43,12 +29,8 @@ void cdProcess(char* path)
   }
 }
 
-void setPaths(char* args)
+void setPaths(char* args, char* pathsList[])
 {
-  //Contains the list of paths. Max number of paths = 200.
-  //First path will always be /bin.
-  char* pathsList[200];
-  pathsList[0] = "/bin";
 
   int argCounter = 1;
   args = strtok(NULL, " \n\r\t");
@@ -65,11 +47,15 @@ void setPaths(char* args)
 
   for(int x = 0; x < argCounter; x++)
   {
-    printf("%s", pathsList[x]);
+    printf("%s\n", pathsList[x]);
   }
 }
 void commandHandlers(char* command)
 {
+  //Contains the list of paths. Max number of paths = 200.
+  //First path will always be /bin.
+  char* pathsList[200] = {NULL};
+  pathsList[0] = "/bin";
 
   //List of built-in commands.
   char* commandList[3];
@@ -99,7 +85,7 @@ void commandHandlers(char* command)
       cdProcess(command);
       break;
     case 2:
-      setPaths(command);
+      setPaths(command, pathsList);
       break;
     default:
       break;
@@ -109,6 +95,56 @@ void commandHandlers(char* command)
   //If the command is not a built in command, then execute the command normally.
   if(switchValue == -1)
   {
+    //First, collect the arguments of the command.
+    //We will set the execv arguments to 100 for now, but they should be variable.
+    char* execArgs[200] = {NULL};
+    int counter = 0;
+    while(command != NULL && counter < 100 && strcmp(command, "&") != 0)
+    {
+      execArgs[counter] = command;
+      command = strtok(NULL, " \n\r\t");
+      counter++;
+    }
+
+    char* execCommand = execArgs[0];
+
+    pid_t pid;
+
+
+    //will need an array for the arguments of the command.
+
+    for(int x = 0; x<200; x++)
+    {
+
+      if (pathsList[x] != NULL) //(strcmp(paths[x], "") != 0)
+      {
+
+        //The following code concatenates the path directories with the program name.
+        //printf("%s", pathsList[2]);
+        char* path = malloc(strlen(pathsList[x])+strlen(execCommand)+2);
+        strcpy(path, pathsList[x]);
+        strcat(path, "/");
+        strcat(path, execCommand);
+
+        //System call that determines if a file exists.
+        //If access returns 0, then it's a success!
+
+        if(access(path, F_OK) == 0)
+        {
+          printf("hello");
+          execv(path, execArgs);
+        }
+
+
+      }
+      else
+      {
+        break;
+      }
+    }
+
+
+    //printf("%s",execArgs[0]);
     /*
     pid_t pid;
     char* paths = "/bin/ls"
